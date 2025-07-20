@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameSpeed = 100; // milliseconds
     let directionQueue = [];
     let gameLoopTimeout;
+    let keysPressed = {}; // Track which keys are currently pressed
 
     // Canvas and context variables (declare in global scope)
     let canvas, ctx, scoreElement, levelElement, restartButton, flagBR, flagUS;
@@ -344,6 +345,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function changeDirection(event) {
         const keyPressed = event.key.toLowerCase();
 
+        // Prevent processing if key is already pressed (avoid repeat events)
+        if (keysPressed[keyPressed]) {
+            return;
+        }
+        keysPressed[keyPressed] = true;
+
         // Check if it's a directional key
         const isDirectionalKey = (keyPressed === 'arrowup' || keyPressed === 'w') ||
                                 (keyPressed === 'arrowdown' || keyPressed === 's') ||
@@ -386,6 +393,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function handleKeyUp(event) {
+        const keyPressed = event.key.toLowerCase();
+        keysPressed[keyPressed] = false;
+    }
+
     function didGameEnd() {
         // Check for collision with self
         for (let i = 1; i < snake.length; i++) {
@@ -415,6 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isPaused = false;
         gameStarted = false; // Reset to show start screen
         directionQueue = [];
+        keysPressed = {}; // Reset key states
         gameSpeed = 100;
         if (levelElement) levelElement.textContent = level;
         if (scoreElement) scoreElement.textContent = score;
@@ -486,6 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Setup event listeners
         document.addEventListener('keydown', changeDirection);
+        document.addEventListener('keyup', handleKeyUp);
         if (restartButton) restartButton.addEventListener('click', restartGame);
         
         // Language selector event listeners
