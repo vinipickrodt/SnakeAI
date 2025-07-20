@@ -23,13 +23,15 @@
     
     <h1 id="game-title">Jogo da Cobrinha</h1>
     <div class="game-container">
+        <div class="level-display">
+            <div class="info-box level-info"><span id="level-label">Nível:</span> <span id="level">1</span></div>
+        </div>
         <canvas id="gameCanvas" width="400" height="400"></canvas>
         <div class="game-info">
             <div class="info-box"><span id="score-label">Pontuação:</span> <span id="score">0</span></div>
-            <div class="info-box"><span id="level-label">Nível:</span> <span id="level">1</span></div>
             <button id="restartButton" style="display: none;">Reiniciar</button>
         </div>
     </div>
-    <script src="script_fixed.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

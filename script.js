@@ -17,8 +17,26 @@ document.addEventListener('DOMContentLoaded', () => {
     let canvas, ctx, scoreElement, levelElement, restartButton, flagBR, flagUS;
     let gridSize, tileCount;
 
+    // Language persistence functions
+    function saveLanguagePreference(lang) {
+        try {
+            localStorage.setItem('snakeGameLanguage', lang);
+        } catch (error) {
+            console.warn('Could not save language preference:', error);
+        }
+    }
+
+    function getSavedLanguage() {
+        try {
+            return localStorage.getItem('snakeGameLanguage');
+        } catch (error) {
+            console.warn('Could not retrieve language preference:', error);
+            return null;
+        }
+    }
+
     // Language system
-    let currentLanguage = 'pt-BR';
+    let currentLanguage = getSavedLanguage() || 'pt-BR';
     
     const translations = {
         'pt-BR': {
@@ -73,8 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Redraw current screen if game is not running
         if (!gameStarted || gameOver || isPaused) {
+            clearCanvas()
             if (canvas && ctx) main();
         }
+
+        // Save the new language preference
+        saveLanguagePreference(lang);
     }
 
     function getText(key) {
@@ -204,9 +226,29 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillText(text, canvas.width / 2, canvas.height / 2);
         }
 
-        drawLevelUpScreen(`${getText('level')} ${level}`);
+        // Animate typing effect for the level text
+        function animateTyping(fullText, callback) {
+            let currentText = '';
+            let charIndex = 0;
+            
+            function typeChar() {
+                if (charIndex < fullText.length) {
+                    currentText += fullText[charIndex];
+                    charIndex++;
+                    drawLevelUpScreen(currentText);
+                    setTimeout(typeChar, 150); // 150ms delay between characters
+                } else {
+                    // Typing animation complete, wait a bit then call callback
+                    setTimeout(callback, 1000);
+                }
+            }
+            
+            typeChar();
+        }
 
-        setTimeout(() => {
+        // Start typing animation for the level text
+        const levelText = `${getText('level')} ${level}`;
+        animateTyping(levelText, () => {
             const countdownInterval = setInterval(() => {
                 if (countdown > 0) {
                     drawLevelUpScreen(countdown--);
@@ -220,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 750); // Show "Go!" for a moment
                 }
             }, 1000);
-        }, 2000); // Show "Level X" for 2 seconds
+        });
     }
 
     function clearCanvas() {
@@ -450,8 +492,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (flagBR) flagBR.addEventListener('click', () => updateLanguage('pt-BR'));
         if (flagUS) flagUS.addEventListener('click', () => updateLanguage('en-US'));
 
-        // Initialize language (default Portuguese)
-        updateLanguage('pt-BR');
+        // Initialize language (use saved preference or default to Portuguese)
+        updateLanguage(currentLanguage);
 
         // Initialize the game (show start screen)
         createFood();

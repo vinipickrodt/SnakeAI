@@ -39,10 +39,33 @@ h1 {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
+.level-display {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 10px 20px;
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.level-info {
+    font-size: 1.4em !important;
+    font-weight: 900 !important;
+    color: #fff !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7) !important;
+    letter-spacing: 1px;
+}
+
 .game-info {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
+    gap: 30px;
     width: 400px;
     margin-top: 20px;
     background: rgba(255, 255, 255, 0.2);
