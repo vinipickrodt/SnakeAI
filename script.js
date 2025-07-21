@@ -1,52 +1,151 @@
+// ==========================================
+// GAME RENDERER AND UI CLASS
+// ==========================================
+
+class GameRenderer {
+    constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.gridSize = 20;
+        this.tileCount = this.canvas.width / this.gridSize;
+    }
+
+    clearCanvas() {
+        this.ctx.fillStyle = '#a8d5e5';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    drawSnake(snake, shouldBlink = false) {
+        if (shouldBlink) return; // Skip drawing when blinking
+        
+        const headColor = '#FFD700'; // Gold
+        const headBorder = '#B8860B';
+        const tailColorStart = { r: 76, g: 175, b: 80 }; // #4CAF50
+        const tailColorEnd = { r: 200, g: 255, b: 200 }; // Light green
+        const tailBorderStart = { r: 46, g: 139, b: 87 }; // #2E8B57
+        const tailBorderEnd = { r: 180, g: 220, b: 180 }; // Light border
+        const len = snake.length;
+
+        snake.forEach((segment, idx) => {
+            if (idx === 0) {
+                // Head of the snake
+                this.ctx.fillStyle = headColor;
+                this.ctx.strokeStyle = headBorder;
+            } else {
+                // Interpolate color for body
+                const t = (idx) / (len - 1);
+                const r = Math.round(tailColorStart.r + t * (tailColorEnd.r - tailColorStart.r));
+                const g = Math.round(tailColorStart.g + t * (tailColorEnd.g - tailColorStart.g));
+                const b = Math.round(tailColorStart.b + t * (tailColorEnd.b - tailColorStart.b));
+                this.ctx.fillStyle = `rgb(${r},${g},${b})`;
+                const br = Math.round(tailBorderStart.r + t * (tailBorderEnd.r - tailBorderStart.r));
+                const bg = Math.round(tailBorderStart.g + t * (tailBorderEnd.g - tailBorderStart.g));
+                const bb = Math.round(tailBorderStart.b + t * (tailBorderEnd.b - tailBorderStart.b));
+                this.ctx.strokeStyle = `rgb(${br},${bg},${bb})`;
+            }
+            this.ctx.fillRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize, this.gridSize);
+            this.ctx.strokeRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize, this.gridSize);
+        });
+    }
+
+    drawFood(food) {
+        this.ctx.fillStyle = '#FF4136';
+        this.ctx.strokeStyle = '#8B0000';
+        this.ctx.fillRect(food.x * this.gridSize, food.y * this.gridSize, this.gridSize, this.gridSize);
+        this.ctx.strokeRect(food.x * this.gridSize, food.y * this.gridSize, this.gridSize, this.gridSize);
+    }
+
+    drawLifePowerUp(lifePowerUp, pulseIntensity) {
+        if (!lifePowerUp) return;
+        
+        this.ctx.fillStyle = `rgba(255, 20, 147, ${pulseIntensity})`;
+        this.ctx.strokeStyle = '#8B0040';
+        
+        const x = lifePowerUp.x * this.gridSize;
+        const y = lifePowerUp.y * this.gridSize;
+        const size = this.gridSize;
+        const crossWidth = size * 0.2;
+        
+        // Vertical bar
+        this.ctx.fillRect(x + size * 0.4, y, crossWidth, size);
+        this.ctx.strokeRect(x + size * 0.4, y, crossWidth, size);
+        
+        // Horizontal bar
+        this.ctx.fillRect(x, y + size * 0.4, size, crossWidth);
+        this.ctx.strokeRect(x, y + size * 0.4, size, crossWidth);
+    }
+
+    drawGameOver(score, getText) {
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '40px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(getText('gameOver'), this.canvas.width / 2, this.canvas.height / 2 - 20);
+        this.ctx.font = '20px Arial';
+        this.ctx.fillText(`${getText('finalScore')} ${score}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
+    }
+
+    drawStartScreen(getText) {
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '30px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(getText('snakeGameTitle'), this.canvas.width / 2, this.canvas.height / 2 - 60);
+        
+        this.ctx.font = '20px Arial';
+        this.ctx.fillText(getText('pressDirectional'), this.canvas.width / 2, this.canvas.height / 2 - 10);
+        this.ctx.fillText(getText('toStart'), this.canvas.width / 2, this.canvas.height / 2 + 20);
+        
+        this.ctx.font = '16px Arial';
+        this.ctx.fillStyle = '#ccc';
+        this.ctx.fillText(getText('useArrows'), this.canvas.width / 2, this.canvas.height / 2 + 60);
+        this.ctx.fillText(getText('pressPause'), this.canvas.width / 2, this.canvas.height / 2 + 80);
+    }
+
+    drawPauseScreen(getText) {
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '40px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(getText('paused'), this.canvas.width / 2, this.canvas.height / 2);
+    }
+
+    drawLevelUpScreen(text) {
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '50px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2);
+    }
+}
+
+// ==========================================
+// MAIN GAME CONTROLLER
+// ==========================================
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Game State Variables (declare early to avoid reference errors)
-    let snake = [{ x: 10, y: 10 }];
-    let food = {};
-    let score = 0;
-    let level = 1;
-    let direction = 'right';
-    let gameOver = false;
-    let isLevelingUp = false;
-    let isPaused = false;
-    let gameStarted = false; // New state for game initialization
-    let gameSpeed = 100; // milliseconds
-    let directionQueue = [];
-    let gameLoopTimeout;
-    let keysPressed = {}; // Track which keys are currently pressed
-
-    // Lives system variables
-    let lives = 3;
-    let isBlinking = false;
-    let blinkStartTime = 0;
-    let lifePowerUp = null;
-    let lifePowerUpTimer = 0;
-    let foodsEaten = 0;
-
-    // Canvas and context variables (declare in global scope)
-    let canvas, ctx, scoreElement, levelElement, restartButton, flagBR, flagUS, livesElement;
-    let gridSize, tileCount;
-
-    // Language persistence functions
-    function saveLanguagePreference(lang) {
-        try {
-            localStorage.setItem('snakeGameLanguage', lang);
-        } catch (error) {
-            console.warn('Could not save language preference:', error);
-        }
-    }
-
-    function getSavedLanguage() {
-        try {
-            return localStorage.getItem('snakeGameLanguage');
-        } catch (error) {
-            console.warn('Could not retrieve language preference:', error);
-            return null;
-        }
-    }
-
-    // Language system
-    let currentLanguage = getSavedLanguage() || 'pt-BR';
+    // Game instances
+    const game = new SnakeGame(20);
+    const renderer = new GameRenderer('gameCanvas');
     
+    // UI elements
+    let scoreElement, levelElement, restartButton, flagBR, flagUS, livesElement, arrowIndicator;
+    
+    // Game state (UI only)
+    let gameStarted = false;
+    let isPaused = false;
+    let isLevelingUp = false;
+    let directionQueue = [];
+    let currentLanguage = localStorage.getItem('snakeGameLanguage') || 'pt-BR';
+
+    // Language translations
     const translations = {
         'pt-BR': {
             gameTitle: 'Jogo da Cobrinha',
@@ -84,11 +183,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    function getText(key) {
+        return translations[currentLanguage][key];
+    }
+
     function updateLanguage(lang) {
         currentLanguage = lang;
         const t = translations[lang];
         
-        // Update HTML elements
         document.getElementById('game-title').textContent = t.gameTitle;
         document.getElementById('score-label').textContent = t.scoreLabel;
         document.getElementById('level-label').textContent = t.levelLabel;
@@ -97,581 +199,203 @@ document.addEventListener('DOMContentLoaded', () => {
         document.title = t.gameTitle;
         document.documentElement.lang = lang;
         
-        // Update flag states
         if (flagBR) flagBR.classList.toggle('active', lang === 'pt-BR');
         if (flagUS) flagUS.classList.toggle('active', lang === 'en-US');
         
-        // Redraw current screen if game is not running
-        if (!gameStarted || gameOver || isPaused) {
-            clearCanvas()
-            if (canvas && ctx) main();
-        }
-
-        // Save the new language preference
-        saveLanguagePreference(lang);
-    }
-
-    function getText(key) {
-        return translations[currentLanguage][key];
-    }
-
-    function main() {
-        console.log('Main called - gameOver:', gameOver, 'gameStarted:', gameStarted, 'isLevelingUp:', isLevelingUp);
+        localStorage.setItem('snakeGameLanguage', lang);
         
-        if (gameOver) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (!gameStarted || game.gameOver || isPaused) {
+            main();
+        }
+    }
 
-            ctx.fillStyle = 'white';
-            ctx.font = '40px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(getText('gameOver'), canvas.width / 2, canvas.height / 2 - 20);
-            ctx.font = '20px Arial';
-            ctx.fillText(`${getText('finalScore')} ${score}`, canvas.width / 2, canvas.height / 2 + 20);
+    function updateUI() {
+        if (scoreElement) scoreElement.textContent = game.score;
+        if (levelElement) levelElement.textContent = game.level;
+        if (livesElement) livesElement.textContent = game.lives;
+    }
+
+    function showArrow(direction) {
+        const arrows = { up: '▲', down: '▼', left: '◀', right: '▶' };
+        const arrow = arrows[direction] || '';
+        if (arrowIndicator && arrow) {
+            arrowIndicator.innerHTML = `<span style="font-size: 100px; color: #222; text-shadow: 2px 2px 8px #fff;">${arrow}</span>`;
+        }
+    }
+
+    function clearArrow() {
+        if (arrowIndicator) arrowIndicator.innerHTML = '';
+    }
+
+    function changeDirection(event) {
+        const keyPressed = event.key.toLowerCase();
+        let direction = null;
+        
+        if (keyPressed === 'arrowup' || keyPressed === 'w') direction = 'up';
+        else if (keyPressed === 'arrowdown' || keyPressed === 's') direction = 'down';
+        else if (keyPressed === 'arrowleft' || keyPressed === 'a') direction = 'left';
+        else if (keyPressed === 'arrowright' || keyPressed === 'd') direction = 'right';
+        
+        if (direction) {
+            showArrow(direction);
+            
+            if (!gameStarted) {
+                gameStarted = true;
+                main();
+                return;
+            }
+            
+            if (!isPaused && !isLevelingUp && !game.gameOver) {
+                if (directionQueue.length < 3) {
+                    directionQueue.push(direction);
+                }
+            }
+        }
+        
+        if (keyPressed === 'p' && gameStarted) {
+            togglePause();
+        }
+    }
+
+    function handleKeyUp(event) {
+        clearArrow();
+    }
+
+    function togglePause() {
+        if (game.gameOver || isLevelingUp) return;
+        isPaused = !isPaused;
+        if (!isPaused) main();
+    }
+
+    function restartGame() {
+        game.restart();
+        isLevelingUp = false;
+        isPaused = false;
+        gameStarted = false;
+        directionQueue = [];
+        updateUI();
+        if (restartButton) restartButton.style.display = 'none';
+        main();
+    }
+
+    // Game loop
+    let lastFrameTime = 0;
+    let frameAccumulator = 0;
+
+    function gameLoop(timestamp) {
+        if (!lastFrameTime) lastFrameTime = timestamp;
+        const delta = timestamp - lastFrameTime;
+        lastFrameTime = timestamp;
+        frameAccumulator += delta;
+
+        if (game.gameOver) {
+            renderer.clearCanvas();
+            renderer.drawFood(game.food);
+            renderer.drawLifePowerUp(game.lifePowerUp, game.getLifePowerUpPulse());
+            renderer.drawSnake(game.snake);
+            renderer.drawGameOver(game.score, getText);
             if (restartButton) restartButton.style.display = 'block';
             return;
         }
 
         if (!gameStarted) {
-            console.log('Game not started, calling drawStartScreen');
-            drawStartScreen();
+            renderer.clearCanvas();
+            renderer.drawFood(game.food);
+            renderer.drawLifePowerUp(game.lifePowerUp, game.getLifePowerUpPulse());
+            renderer.drawSnake(game.snake);
+            renderer.drawStartScreen(getText);
+            requestAnimationFrame(gameLoop);
+            return;
+        }
+
+        if (isPaused) {
+            renderer.drawPauseScreen(getText);
+            requestAnimationFrame(gameLoop);
             return;
         }
 
         if (isLevelingUp) {
-            // The level up sequence is a blocking animation that takes over.
-            // Just return without doing anything, the sequence is already running
+            requestAnimationFrame(gameLoop);
             return;
         }
 
-        gameLoopTimeout = setTimeout(() => {
-            clearCanvas();
-            drawFood();
-            drawLifePowerUp();
-            moveSnake();
-            drawSnake();
-            main();
-        }, gameSpeed);
-    }
-
-    function drawStartScreen() {
-        console.log('Drawing start screen...');
-        console.log('gameStarted:', gameStarted);
-        console.log('canvas:', canvas);
-        console.log('ctx:', ctx);
-        
-        // Draw the game state in the background
-        clearCanvas();
-        drawFood();
-        drawLifePowerUp();
-        drawSnake();
-
-        // Draw overlay and instructions
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.fillStyle = 'white';
-        ctx.font = '30px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(getText('snakeGameTitle'), canvas.width / 2, canvas.height / 2 - 60);
-        
-        ctx.font = '20px Arial';
-        ctx.fillText(getText('pressDirectional'), canvas.width / 2, canvas.height / 2 - 10);
-        ctx.fillText(getText('toStart'), canvas.width / 2, canvas.height / 2 + 20);
-        
-        ctx.font = '16px Arial';
-        ctx.fillStyle = '#ccc';
-        ctx.fillText(getText('useArrows'), canvas.width / 2, canvas.height / 2 + 60);
-        ctx.fillText(getText('pressPause'), canvas.width / 2, canvas.height / 2 + 80);
-        
-        console.log('Start screen drawn');
-    }
-
-    function drawPauseScreen() {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';   
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = 'white';
-        ctx.font = '40px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(getText('paused'), canvas.width / 2, canvas.height / 2);
-    }
-
-    function togglePause() {
-        if (gameOver || isLevelingUp) return;
-
-        isPaused = !isPaused;
-        if (isPaused) {
-            clearTimeout(gameLoopTimeout);
-            drawPauseScreen();
-        } else {
-            main(); // Resume game
-        }
-    }
-
-    function startLevelUpSequence() {
-        console.log('Starting level up sequence, current level:', level);
-        clearTimeout(gameLoopTimeout); // Ensure no game loops are running
-        level++;
-        if (levelElement) {
-            levelElement.textContent = level;
-        } else {
-            console.error('levelElement is null!');
-        }
-        console.log('New level:', level);
-        // Speed up the game, but with a minimum speed (e.g., 40ms)
-        gameSpeed = Math.max(40, 100 - (level - 1) * 10);
-        console.log('New game speed:', gameSpeed);
-
-        let countdown = 3;
-
-        function drawLevelUpScreen(text) {
-            // Redraw the current game state underneath the message
-            clearCanvas();
-            drawFood();
-            drawLifePowerUp();
-            drawSnake();
-
-            // Draw overlay and text
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.font = '50px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-        }
-
-        // Animate typing effect for the level text
-        function animateTyping(fullText, callback) {
-            let currentText = '';
-            let charIndex = 0;
+        if (frameAccumulator >= game.gameSpeed) {
+            game.update();
             
-            function typeChar() {
-                if (charIndex < fullText.length) {
-                    currentText += fullText[charIndex];
-                    charIndex++;
-                    drawLevelUpScreen(currentText);
-                    setTimeout(typeChar, 150); // 150ms delay between characters
-                } else {
-                    // Typing animation complete, wait a bit then call callback
-                    setTimeout(callback, 1000);
-                }
+            if (directionQueue.length > 0) {
+                const newDirection = directionQueue.shift();
+                game.setDirection(newDirection);
             }
             
-            typeChar();
-        }
-
-        // Start typing animation for the level text
-        const levelText = `${getText('level')} ${level}`;
-        animateTyping(levelText, () => {
-            const countdownInterval = setInterval(() => {
-                if (countdown > 0) {
-                    drawLevelUpScreen(countdown--);
-                } else {
-                    clearInterval(countdownInterval);
-                    drawLevelUpScreen(getText('go'));
-                    setTimeout(() => {
-                        console.log('Level up sequence complete, resuming game');
-                        isLevelingUp = false;
-                        main(); // Resume the game
-                    }, 750); // Show "Go!" for a moment
-                }
-            }, 1000);
-        });
-    }
-
-    function clearCanvas() {
-        ctx.fillStyle = '#a8d5e5'; // A light blue background from CSS
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    function drawSnake() {
-        // Handle blinking effect
-        if (isBlinking) {
-            const blinkDuration = 2000; // 2 seconds
-            const blinkInterval = 200; // 200ms intervals
-            const elapsed = Date.now() - blinkStartTime;
-            
-            if (elapsed >= blinkDuration) {
-                isBlinking = false;
-            } else {
-                // Skip drawing every other interval to create blink effect
-                const shouldShow = Math.floor(elapsed / blinkInterval) % 2 === 0;
-                if (!shouldShow) return;
-            }
-        }
-        
-        snake.forEach(drawSnakePart);
-    }
-
-    function drawSnakePart(snakePart) {
-        ctx.fillStyle = '#4CAF50'; // Green snake
-        ctx.strokeStyle = '#2E8B57'; // Darker green border
-        ctx.fillRect(snakePart.x * gridSize, snakePart.y * gridSize, gridSize, gridSize);
-        ctx.strokeRect(snakePart.x * gridSize, snakePart.y * gridSize, gridSize, gridSize);
-    }
-
-    function drawFood() {
-        ctx.fillStyle = '#FF4136'; // Red food
-        ctx.strokeStyle = '#8B0000'; // Darker red border
-        ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
-        ctx.strokeRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
-    }
-
-    function drawLifePowerUp() {
-        if (!lifePowerUp) return;
-        
-        // Check if power-up should disappear (3 seconds)
-        const elapsed = Date.now() - lifePowerUpTimer;
-        if (elapsed >= 3000) {
-            lifePowerUp = null;
-            lifePowerUpTimer = 0;
-            return;
-        }
-        
-        // Draw pulsing heart-like power-up
-        const pulseIntensity = Math.sin(elapsed / 100) * 0.3 + 0.7;
-        ctx.fillStyle = `rgba(255, 20, 147, ${pulseIntensity})`; // Pink with pulsing alpha
-        ctx.strokeStyle = '#8B0040'; // Dark pink border
-        
-        // Draw a cross/plus shape for life
-        const x = lifePowerUp.x * gridSize;
-        const y = lifePowerUp.y * gridSize;
-        const size = gridSize;
-        const crossWidth = size * 0.2;
-        
-        // Vertical bar
-        ctx.fillRect(x + size * 0.4, y, crossWidth, size);
-        ctx.strokeRect(x + size * 0.4, y, crossWidth, size);
-        
-        // Horizontal bar
-        ctx.fillRect(x, y + size * 0.4, size, crossWidth);
-        ctx.strokeRect(x, y + size * 0.4, size, crossWidth);
-    }
-
-    function moveSnake() {
-        // Process one direction from the queue per move
-        if (directionQueue.length > 0) {
-            direction = directionQueue.shift();
-        }
-
-        const head = { x: snake[0].x, y: snake[0].y };
-
-        switch (direction) {
-            case 'up': head.y -= 1; break;
-            case 'down': head.y += 1; break;
-            case 'left': head.x -= 1; break;
-            case 'right': head.x += 1; break;
-        }
-
-        // Check for wall collision and handle teleporting
-        let hitWall = false;
-        if (head.x < 0) {
-            head.x = tileCount - 1;
-            hitWall = true;
-        } else if (head.x >= tileCount) {
-            head.x = 0;
-            hitWall = true;
-        } else if (head.y < 0) {
-            head.y = tileCount - 1;
-            hitWall = true;
-        } else if (head.y >= tileCount) {
-            head.y = 0;
-            hitWall = true;
-        }
-
-        snake.unshift(head);
-
-        // Check for self collision
-        let hitSelf = false;
-        for (let i = 1; i < snake.length; i++) {
-            if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
-                hitSelf = true;
-                break;
-            }
-        }
-
-        // Handle collisions that cost lives
-        if ((hitWall || hitSelf) && !isBlinking) {
-            loseLife();
-            if (gameOver) return;
-        }
-
-        // Check for food consumption
-        const hasEatenFood = snake[0].x === food.x && snake[0].y === food.y;
-        if (hasEatenFood) {
-            score += 1;
-            foodsEaten++;
-            if (scoreElement) scoreElement.textContent = score;
-            createFood();
-
-            // Check if life power-up should appear
-            if (foodsEaten % 5 === 0) {
-                createLifePowerUp();
+            const moved = game.move();
+            if (!moved) {
+                requestAnimationFrame(gameLoop);
+                return;
             }
 
-            // Check for level up condition (every 10 points now)
-            if (score > 0 && score % 10 === 0) {
-                console.log('Level up triggered! Score:', score);
-                isLevelingUp = true;
+            if (game.score > 0 && game.score % 10 === 0 && game.score / 10 === game.level) {
                 startLevelUpSequence();
                 return;
             }
-        } else {
-            snake.pop();
-        }
 
-        // Check for life power-up consumption
-        if (lifePowerUp && snake[0].x === lifePowerUp.x && snake[0].y === lifePowerUp.y) {
-            lives++;
-            if (livesElement) livesElement.textContent = lives;
-            lifePowerUp = null;
-            lifePowerUpTimer = 0;
+            updateUI();
+            renderer.clearCanvas();
+            renderer.drawFood(game.food);
+            renderer.drawLifePowerUp(game.lifePowerUp, game.getLifePowerUpPulse());
+            renderer.drawSnake(game.snake, game.shouldSnakeBlink());
+            frameAccumulator = 0;
         }
+        requestAnimationFrame(gameLoop);
     }
 
-    function createFood() {
-        food.x = Math.floor(Math.random() * tileCount);
-        food.y = Math.floor(Math.random() * tileCount);
+    function main() {
+        lastFrameTime = 0;
+        frameAccumulator = 0;
+        requestAnimationFrame(gameLoop);
+    }
 
-        // Ensure food is not created on the snake
-        for (const part of snake) {
-            if (part.x === food.x && part.y === food.y) {
-                createFood(); // Recursively call to find a new spot
+    function startLevelUpSequence() {
+        isLevelingUp = true;
+        game.levelUp();
+        updateUI();
+        
+        let levelUpStart = null;
+        function levelUpFrame(ts) {
+            if (!levelUpStart) levelUpStart = ts;
+            const elapsed = ts - levelUpStart;
+            
+            if (elapsed < 1000) {
+                renderer.drawLevelUpScreen(`${getText('level')} ${game.level}`);
+            } else if (elapsed < 4000) {
+                const sec = 3 - Math.floor((elapsed - 1000) / 1000);
+                renderer.drawLevelUpScreen(sec > 0 ? sec : getText('go'));
+            } else {
+                isLevelingUp = false;
+                main();
                 return;
             }
+            requestAnimationFrame(levelUpFrame);
         }
+        requestAnimationFrame(levelUpFrame);
     }
 
-    function createLifePowerUp() {
-        lifePowerUp = {
-            x: Math.floor(Math.random() * tileCount),
-            y: Math.floor(Math.random() * tileCount)
-        };
-
-        // Ensure life power-up is not created on the snake or regular food
-        for (const part of snake) {
-            if (part.x === lifePowerUp.x && part.y === lifePowerUp.y) {
-                createLifePowerUp();
-                return;
-            }
-        }
-        if (lifePowerUp.x === food.x && lifePowerUp.y === food.y) {
-            createLifePowerUp();
-            return;
-        }
-
-        lifePowerUpTimer = Date.now();
-    }
-
-    function loseLife() {
-        lives--;
-        if (livesElement) livesElement.textContent = lives;
-        
-        if (lives <= 0) {
-            gameOver = true;
-            return;
-        }
-
-        // Start blinking effect
-        isBlinking = true;
-        blinkStartTime = Date.now();
-    }
-
-    function didGameEnd() {
-        // Game only ends when lives reach 0
-        return lives <= 0;
-    }
-
-    function changeDirection(event) {
-        const keyPressed = event.key.toLowerCase();
-
-        // Prevent processing if key is already pressed (avoid repeat events)
-        if (keysPressed[keyPressed]) {
-            return;
-        }
-        keysPressed[keyPressed] = true;
-
-        // Check if it's a directional key
-        const isDirectionalKey = (keyPressed === 'arrowup' || keyPressed === 'w') ||
-                                (keyPressed === 'arrowdown' || keyPressed === 's') ||
-                                (keyPressed === 'arrowleft' || keyPressed === 'a') ||
-                                (keyPressed === 'arrowright' || keyPressed === 'd');
-
-        // Start the game if it hasn't started yet and a directional key is pressed
-        if (!gameStarted && isDirectionalKey) {
-            gameStarted = true;
-            console.log('Game started!');
-            main(); // Start the main game loop
-        }
-
-        // Handle pause
-        if (keyPressed === 'p' && gameStarted) {
-            togglePause();
-            return;
-        }
-
-        // Prevent direction changes during pause, level up, or game over
-        if (isPaused || isLevelingUp || gameOver || !gameStarted) {
-            return;
-        }
-
-        // Prevent reverse direction (can't go directly backwards)
-        const oppositeDirections = {
-            'up': 'down',
-            'down': 'up',
-            'left': 'right',
-            'right': 'left'
-        };
-
-        let newDirection = null;
-
-        // Map keys to directions
-        if (keyPressed === 'arrowup' || keyPressed === 'w') {
-            newDirection = 'up';
-        } else if (keyPressed === 'arrowdown' || keyPressed === 's') {
-            newDirection = 'down';
-        } else if (keyPressed === 'arrowleft' || keyPressed === 'a') {
-            newDirection = 'left';
-        } else if (keyPressed === 'arrowright' || keyPressed === 'd') {
-            newDirection = 'right';
-        }
-
-        // Only add to queue if it's a valid direction and not opposite to current direction
-        if (newDirection && newDirection !== oppositeDirections[direction]) {
-            // Limit queue size to prevent spam
-            if (directionQueue.length < 3) {
-                directionQueue.push(newDirection);
-            }
-        }
-    }
-
-    function handleKeyUp(event) {
-        const keyPressed = event.key.toLowerCase();
-        keysPressed[keyPressed] = false;
-    }
-
-    // ...existing code...
-    function restartGame() {
-        clearTimeout(gameLoopTimeout);
-
-        snake = [{ x: 10, y: 10 }];
-        score = 0;
-        level = 1;
-        lives = 3;
-        direction = 'right';
-        gameOver = false;
-        isLevelingUp = false;
-        isPaused = false;
-        gameStarted = false; // Reset to show start screen
-        directionQueue = [];
-        keysPressed = {}; // Reset key states
-        gameSpeed = 100;
-        isBlinking = false;
-        blinkStartTime = 0;
-        lifePowerUp = null;
-        lifePowerUpTimer = 0;
-        foodsEaten = 0;
-        
-        if (levelElement) levelElement.textContent = level;
-        if (scoreElement) scoreElement.textContent = score;
-        if (livesElement) livesElement.textContent = lives;
-        if (restartButton) restartButton.style.display = 'none';
-        createFood();
-        main(); // This will show the start screen
-    }
-
-    // Add a small delay to ensure all elements are fully loaded
+    // Initialize
     setTimeout(() => {
-        canvas = document.getElementById('gameCanvas');
-        ctx = canvas.getContext('2d');
         scoreElement = document.getElementById('score');
+        levelElement = document.getElementById('level');
         livesElement = document.getElementById('lives');
-        
-        // Language selector elements
+        restartButton = document.getElementById('restartButton');
         flagBR = document.getElementById('flag-br');
         flagUS = document.getElementById('flag-us');
-        
-        // More robust way to find the level element
-        levelElement = document.getElementById('level');
-        if (!levelElement) {
-            levelElement = document.querySelector('#level');
-        }
-        if (!levelElement) {
-            levelElement = document.querySelector('span[id="level"]');
-        }
-        if (!levelElement) {
-            // Last resort: find by content
-            const spans = document.querySelectorAll('span');
-            for (let span of spans) {
-                if (span.textContent.trim() === '1' && span.parentElement && span.parentElement.textContent.includes('Level:')) {
-                    levelElement = span;
-                    console.log('Found level element by content matching');
-                    break;
-                }
-            }
-        }
-        
-        restartButton = document.getElementById('restartButton');
+        arrowIndicator = document.getElementById('arrow-indicator');
 
-        gridSize = 20;
-        tileCount = canvas.width / gridSize;
-
-        // Debug: Check if elements are found
-        console.log('Elements found:');
-        console.log('canvas:', canvas);
-        console.log('scoreElement:', scoreElement);
-        console.log('levelElement:', levelElement);
-        console.log('restartButton:', restartButton);
-
-        if (!canvas || !scoreElement || !restartButton) {
-            console.error('Critical elements not found!');
-            return;
-        }
-        
-        if (!levelElement) {
-            console.warn('Level element not found, creating a replacement...');
-            // Create the level element if it doesn't exist
-            const gameInfo = document.querySelector('.game-info');
-            if (gameInfo) {
-                const infoBox = document.createElement('div');
-                infoBox.className = 'info-box';
-                infoBox.innerHTML = 'Level: <span id="level-new">1</span>';
-                gameInfo.insertBefore(infoBox, restartButton);
-                levelElement = document.getElementById('level-new');
-                console.log('Created new level element:', levelElement);
-            }
-        }
-
-        // Create lives element if it doesn't exist
-        if (!livesElement) {
-            console.warn('Lives element not found, creating it...');
-            const gameInfo = document.querySelector('.game-info');
-            if (gameInfo) {
-                const livesBox = document.createElement('div');
-                livesBox.className = 'info-box';
-                livesBox.innerHTML = '<span id="lives-label">Lives:</span> <span id="lives">3</span>';
-                gameInfo.insertBefore(livesBox, restartButton);
-                livesElement = document.getElementById('lives');
-                console.log('Created lives element:', livesElement);
-            }
-        }
-
-        // Setup event listeners
         document.addEventListener('keydown', changeDirection);
         document.addEventListener('keyup', handleKeyUp);
         if (restartButton) restartButton.addEventListener('click', restartGame);
-        
-        // Language selector event listeners
         if (flagBR) flagBR.addEventListener('click', () => updateLanguage('pt-BR'));
         if (flagUS) flagUS.addEventListener('click', () => updateLanguage('en-US'));
 
-        // Initialize language (use saved preference or default to Portuguese)
         updateLanguage(currentLanguage);
-
-        // Initialize the game (show start screen)
-        createFood();
-        main(); // This will show the start screen since gameStarted is false
-        
-    }, 100); // End of setTimeout
+        main();
+    }, 100);
 });
