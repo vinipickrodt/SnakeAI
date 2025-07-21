@@ -4,6 +4,7 @@
   "description": "Snake Game with AI features",
   "main": "index.html",
   "scripts": {
+    "start": "node server.js",
     "version-increment": "node scripts/increment-version.js"
   },
   "keywords": [
