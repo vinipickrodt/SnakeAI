@@ -14,8 +14,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameLoopTimeout;
     let keysPressed = {}; // Track which keys are currently pressed
 
+    // Lives system variables
+    let lives = 3;
+    let isBlinking = false;
+    let blinkStartTime = 0;
+    let lifePowerUp = null;
+    let lifePowerUpTimer = 0;
+    let foodsEaten = 0;
+
     // Canvas and context variables (declare in global scope)
-    let canvas, ctx, scoreElement, levelElement, restartButton, flagBR, flagUS;
+    let canvas, ctx, scoreElement, levelElement, restartButton, flagBR, flagUS, livesElement;
     let gridSize, tileCount;
 
     // Language persistence functions
@@ -44,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameTitle: 'Jogo da Cobrinha',
             scoreLabel: 'Pontuação:',
             levelLabel: 'Nível:',
+            livesLabel: 'Vidas:',
             restartButton: 'Reiniciar',
             gameOver: 'Fim de Jogo',
             finalScore: 'Pontuação Final:',
@@ -60,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameTitle: 'Snake Game',
             scoreLabel: 'Score:',
             levelLabel: 'Level:',
+            livesLabel: 'Lives:',
             restartButton: 'Restart',
             gameOver: 'Game Over',
             finalScore: 'Final Score:',
@@ -82,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('game-title').textContent = t.gameTitle;
         document.getElementById('score-label').textContent = t.scoreLabel;
         document.getElementById('level-label').textContent = t.levelLabel;
+        if (document.getElementById('lives-label')) document.getElementById('lives-label').textContent = t.livesLabel;
         if (restartButton) restartButton.textContent = t.restartButton;
         document.title = t.gameTitle;
         document.documentElement.lang = lang;
@@ -136,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameLoopTimeout = setTimeout(() => {
             clearCanvas();
             drawFood();
+            drawLifePowerUp();
             moveSnake();
             drawSnake();
             main();
@@ -151,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Draw the game state in the background
         clearCanvas();
         drawFood();
+        drawLifePowerUp();
         drawSnake();
 
         // Draw overlay and instructions
@@ -216,6 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Redraw the current game state underneath the message
             clearCanvas();
             drawFood();
+            drawLifePowerUp();
             drawSnake();
 
             // Draw overlay and text
@@ -272,6 +286,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawSnake() {
+        // Handle blinking effect
+        if (isBlinking) {
+            const blinkDuration = 2000; // 2 seconds
+            const blinkInterval = 200; // 200ms intervals
+            const elapsed = Date.now() - blinkStartTime;
+            
+            if (elapsed >= blinkDuration) {
+                isBlinking = false;
+            } else {
+                // Skip drawing every other interval to create blink effect
+                const shouldShow = Math.floor(elapsed / blinkInterval) % 2 === 0;
+                if (!shouldShow) return;
+            }
+        }
+        
         snake.forEach(drawSnakePart);
     }
 
@@ -289,6 +318,37 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.strokeRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
     }
 
+    function drawLifePowerUp() {
+        if (!lifePowerUp) return;
+        
+        // Check if power-up should disappear (3 seconds)
+        const elapsed = Date.now() - lifePowerUpTimer;
+        if (elapsed >= 3000) {
+            lifePowerUp = null;
+            lifePowerUpTimer = 0;
+            return;
+        }
+        
+        // Draw pulsing heart-like power-up
+        const pulseIntensity = Math.sin(elapsed / 100) * 0.3 + 0.7;
+        ctx.fillStyle = `rgba(255, 20, 147, ${pulseIntensity})`; // Pink with pulsing alpha
+        ctx.strokeStyle = '#8B0040'; // Dark pink border
+        
+        // Draw a cross/plus shape for life
+        const x = lifePowerUp.x * gridSize;
+        const y = lifePowerUp.y * gridSize;
+        const size = gridSize;
+        const crossWidth = size * 0.2;
+        
+        // Vertical bar
+        ctx.fillRect(x + size * 0.4, y, crossWidth, size);
+        ctx.strokeRect(x + size * 0.4, y, crossWidth, size);
+        
+        // Horizontal bar
+        ctx.fillRect(x, y + size * 0.4, size, crossWidth);
+        ctx.strokeRect(x, y + size * 0.4, size, crossWidth);
+    }
+
     function moveSnake() {
         // Process one direction from the queue per move
         if (directionQueue.length > 0) {
@@ -304,28 +364,69 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'right': head.x += 1; break;
         }
 
-        snake.unshift(head);
-
-        if (didGameEnd()) {
-            gameOver = true;
-            return;
+        // Check for wall collision and handle teleporting
+        let hitWall = false;
+        if (head.x < 0) {
+            head.x = tileCount - 1;
+            hitWall = true;
+        } else if (head.x >= tileCount) {
+            head.x = 0;
+            hitWall = true;
+        } else if (head.y < 0) {
+            head.y = tileCount - 1;
+            hitWall = true;
+        } else if (head.y >= tileCount) {
+            head.y = 0;
+            hitWall = true;
         }
 
+        snake.unshift(head);
+
+        // Check for self collision
+        let hitSelf = false;
+        for (let i = 1; i < snake.length; i++) {
+            if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
+                hitSelf = true;
+                break;
+            }
+        }
+
+        // Handle collisions that cost lives
+        if ((hitWall || hitSelf) && !isBlinking) {
+            loseLife();
+            if (gameOver) return;
+        }
+
+        // Check for food consumption
         const hasEatenFood = snake[0].x === food.x && snake[0].y === food.y;
         if (hasEatenFood) {
-            score += 10;
+            score += 1;
+            foodsEaten++;
             if (scoreElement) scoreElement.textContent = score;
-            createFood(); // Always create new food when eaten
+            createFood();
 
-            // Check for level up condition
-            if (score > 0 && score % 100 === 0) {
+            // Check if life power-up should appear
+            if (foodsEaten % 5 === 0) {
+                createLifePowerUp();
+            }
+
+            // Check for level up condition (every 10 points now)
+            if (score > 0 && score % 10 === 0) {
                 console.log('Level up triggered! Score:', score);
                 isLevelingUp = true;
                 startLevelUpSequence();
-                return; // Exit early to prevent normal game loop continuation
+                return;
             }
         } else {
             snake.pop();
+        }
+
+        // Check for life power-up consumption
+        if (lifePowerUp && snake[0].x === lifePowerUp.x && snake[0].y === lifePowerUp.y) {
+            lives++;
+            if (livesElement) livesElement.textContent = lives;
+            lifePowerUp = null;
+            lifePowerUpTimer = 0;
         }
     }
 
@@ -340,6 +441,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
         }
+    }
+
+    function createLifePowerUp() {
+        lifePowerUp = {
+            x: Math.floor(Math.random() * tileCount),
+            y: Math.floor(Math.random() * tileCount)
+        };
+
+        // Ensure life power-up is not created on the snake or regular food
+        for (const part of snake) {
+            if (part.x === lifePowerUp.x && part.y === lifePowerUp.y) {
+                createLifePowerUp();
+                return;
+            }
+        }
+        if (lifePowerUp.x === food.x && lifePowerUp.y === food.y) {
+            createLifePowerUp();
+            return;
+        }
+
+        lifePowerUpTimer = Date.now();
+    }
+
+    function loseLife() {
+        lives--;
+        if (livesElement) livesElement.textContent = lives;
+        
+        if (lives <= 0) {
+            gameOver = true;
+            return;
+        }
+
+        // Start blinking effect
+        isBlinking = true;
+        blinkStartTime = Date.now();
+    }
+
+    function didGameEnd() {
+        // Game only ends when lives reach 0
+        return lives <= 0;
     }
 
     function changeDirection(event) {
@@ -357,39 +498,51 @@ document.addEventListener('DOMContentLoaded', () => {
                                 (keyPressed === 'arrowleft' || keyPressed === 'a') ||
                                 (keyPressed === 'arrowright' || keyPressed === 'd');
 
-        // Start the game if it hasn't started and a directional key is pressed
+        // Start the game if it hasn't started yet and a directional key is pressed
         if (!gameStarted && isDirectionalKey) {
             gameStarted = true;
-            main(); // Start the game loop
-            // Don't return here, let the direction change be processed
+            console.log('Game started!');
+            main(); // Start the main game loop
         }
 
-        // Toggle pause state with 'p'
-        if (keyPressed === 'p') {
+        // Handle pause
+        if (keyPressed === 'p' && gameStarted) {
             togglePause();
             return;
         }
 
-        // Ignore other keys if paused, game over, leveling up, or game not started
-        if (isPaused || gameOver || isLevelingUp || !gameStarted) {
+        // Prevent direction changes during pause, level up, or game over
+        if (isPaused || isLevelingUp || gameOver || !gameStarted) {
             return;
         }
 
-        // The direction the snake will be going in the next frame, considering the queue.
-        const lastQueuedDirection = directionQueue.length > 0 ? directionQueue[directionQueue.length - 1] : direction;
+        // Prevent reverse direction (can't go directly backwards)
+        const oppositeDirections = {
+            'up': 'down',
+            'down': 'up',
+            'left': 'right',
+            'right': 'left'
+        };
 
-        // Prevent adding the opposite direction to the queue
-        if ((keyPressed === 'arrowup' || keyPressed === 'w') && lastQueuedDirection !== 'down') {
-            directionQueue.push('up');
+        let newDirection = null;
+
+        // Map keys to directions
+        if (keyPressed === 'arrowup' || keyPressed === 'w') {
+            newDirection = 'up';
+        } else if (keyPressed === 'arrowdown' || keyPressed === 's') {
+            newDirection = 'down';
+        } else if (keyPressed === 'arrowleft' || keyPressed === 'a') {
+            newDirection = 'left';
+        } else if (keyPressed === 'arrowright' || keyPressed === 'd') {
+            newDirection = 'right';
         }
-        if ((keyPressed === 'arrowdown' || keyPressed === 's') && lastQueuedDirection !== 'up') {
-            directionQueue.push('down');
-        }
-        if ((keyPressed === 'arrowleft' || keyPressed === 'a') && lastQueuedDirection !== 'right') {
-            directionQueue.push('left');
-        }
-        if ((keyPressed === 'arrowright' || keyPressed === 'd') && lastQueuedDirection !== 'left') {
-            directionQueue.push('right');
+
+        // Only add to queue if it's a valid direction and not opposite to current direction
+        if (newDirection && newDirection !== oppositeDirections[direction]) {
+            // Limit queue size to prevent spam
+            if (directionQueue.length < 3) {
+                directionQueue.push(newDirection);
+            }
         }
     }
 
@@ -398,29 +551,14 @@ document.addEventListener('DOMContentLoaded', () => {
         keysPressed[keyPressed] = false;
     }
 
-    function didGameEnd() {
-        // Check for collision with self
-        for (let i = 1; i < snake.length; i++) {
-            if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
-                return true;
-            }
-        }
-
-        // Check for collision with walls
-        const hitLeftWall = snake[0].x < 0;
-        const hitRightWall = snake[0].x >= tileCount;
-        const hitTopWall = snake[0].y < 0;
-        const hitBottomWall = snake[0].y >= tileCount;
-
-        return hitLeftWall || hitRightWall || hitTopWall || hitBottomWall;
-    }
-
+    // ...existing code...
     function restartGame() {
         clearTimeout(gameLoopTimeout);
 
         snake = [{ x: 10, y: 10 }];
         score = 0;
         level = 1;
+        lives = 3;
         direction = 'right';
         gameOver = false;
         isLevelingUp = false;
@@ -429,8 +567,15 @@ document.addEventListener('DOMContentLoaded', () => {
         directionQueue = [];
         keysPressed = {}; // Reset key states
         gameSpeed = 100;
+        isBlinking = false;
+        blinkStartTime = 0;
+        lifePowerUp = null;
+        lifePowerUpTimer = 0;
+        foodsEaten = 0;
+        
         if (levelElement) levelElement.textContent = level;
         if (scoreElement) scoreElement.textContent = score;
+        if (livesElement) livesElement.textContent = lives;
         if (restartButton) restartButton.style.display = 'none';
         createFood();
         main(); // This will show the start screen
@@ -441,6 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas = document.getElementById('gameCanvas');
         ctx = canvas.getContext('2d');
         scoreElement = document.getElementById('score');
+        livesElement = document.getElementById('lives');
         
         // Language selector elements
         flagBR = document.getElementById('flag-br');
@@ -494,6 +640,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 gameInfo.insertBefore(infoBox, restartButton);
                 levelElement = document.getElementById('level-new');
                 console.log('Created new level element:', levelElement);
+            }
+        }
+
+        // Create lives element if it doesn't exist
+        if (!livesElement) {
+            console.warn('Lives element not found, creating it...');
+            const gameInfo = document.querySelector('.game-info');
+            if (gameInfo) {
+                const livesBox = document.createElement('div');
+                livesBox.className = 'info-box';
+                livesBox.innerHTML = '<span id="lives-label">Lives:</span> <span id="lives">3</span>';
+                gameInfo.insertBefore(livesBox, restartButton);
+                livesElement = document.getElementById('lives');
+                console.log('Created lives element:', livesElement);
             }
         }
 

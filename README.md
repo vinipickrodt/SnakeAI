@@ -20,10 +20,14 @@ A modern implementation of the classic Snake game built with vanilla JavaScript,
 - **Click Restart** - Start a new game after game over
 
 ### Game Rules
-1. **Objective**: Eat as many red food items as possible to win.
-2. **Avoid**: Hitting the walls or your own body
-3. **Progression**: Each 10 points advances you to the next level with increased speed
-4. **Scoring**: Each food item gives you 1 point
+1. **Objective**: Eat as many red food items as possible to gain points and collect life power-ups
+2. **Lives System**: Start with 3 lives - lose a life when hitting walls or your own body
+3. **Wall Collisions**: Teleport to the opposite side but lose a life (snake blinks for 2 seconds)
+4. **Self Collisions**: Continue playing but lose a life (snake blinks for 2 seconds)
+5. **Life Power-ups**: Pink cross appears every 5 food items for 3 seconds - collect to gain an extra life
+6. **Game Over**: Only occurs when all lives are lost
+7. **Progression**: Each 10 points advances you to the next level with increased speed
+8. **Scoring**: Each food item gives you 1 point
 
 ### Getting Started
 1. Open the game in your browser
@@ -63,6 +67,14 @@ A modern implementation of the classic Snake game built with vanilla JavaScript,
 - **Collision detection** for walls and self-collision
 - **Responsive canvas** rendering
 
+### ❤️ **Lives System**
+- **3 Starting Lives** - Begin each game with 3 chances
+- **Wall Teleportation** - Hit a wall to teleport to the opposite side (costs 1 life)
+- **Self-Collision Recovery** - Hit your own body to continue playing (costs 1 life)
+- **Visual Feedback** - Snake blinks for 2 seconds after losing a life
+- **Life Power-ups** - Pink cross appears every 5 food items for 3 seconds
+- **Smart Game Over** - Only ends when all lives are exhausted
+
 ## 🚀 Version Management
 
 This project includes an automated version control system:
@@ -76,7 +88,17 @@ This project includes an automated version control system:
 
 ### Version History & Bug Fixes
 
-#### v1.2.0 - Current
+#### v1.3.0 - Current (Lives System Update)
+- ✅ **Lives System**: 3 starting lives with visual counter
+- ✅ **Wall Teleportation**: Pass through walls but lose a life
+- ✅ **Self-Collision Recovery**: Continue after hitting yourself (lose a life)
+- ✅ **Life Power-ups**: Pink cross appears every 5 food items for 3 seconds
+- ✅ **Visual Feedback**: Snake blinks for 2 seconds after losing a life
+- ✅ **Smart Game Over**: Only ends when all lives are exhausted
+- ✅ **Enhanced Gameplay**: More forgiving mechanics for casual players
+- ✅ **Balanced Scoring**: 1 point per food item (down from 10)
+
+#### v1.2.0 - Previous
 - ✅ **Language System**: Complete bilingual support (PT/EN)
 - ✅ **Level Progression**: 10 levels with visual feedback
 - ✅ **Enhanced Controls**: WASD + Arrow keys support
@@ -146,6 +168,10 @@ SnakeAI/
 - **Starting Speed**: 100ms per frame
 - **Max Levels**: 10
 - **Speed Increase**: 8ms faster per level
+- **Starting Lives**: 3
+- **Life Power-up Frequency**: Every 5 food items
+- **Life Power-up Duration**: 3 seconds
+- **Blink Duration**: 2 seconds after life loss
 - **Languages Supported**: 2 (Portuguese, English)
 
 ## 🤝 Contributing
