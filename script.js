@@ -139,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPaused = false;
     let isLevelingUp = false;
     let directionQueue = [];
+    let lastKeyPressed = '';
     let currentLanguage = localStorage.getItem('snakeGameLanguage') || 'pt-BR';
 
     // Language translations
@@ -224,7 +225,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function changeDirection(event) {
+        // Prevent default behavior and stop propagation
+        event.preventDefault();
+        
         const keyPressed = event.key.toLowerCase();
+        
+        // Ignore repeated key presses (when user holds a key)
+        if (keyPressed === lastKeyPressed && event.repeat) {
+            return;
+        }
+        lastKeyPressed = keyPressed;
+        
         let direction = null;
         
         if (keyPressed === 'arrowup' || keyPressed === 'w') direction = 'up';
@@ -242,8 +253,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             if (!isPaused && !isLevelingUp && !game.gameOver) {
-                if (directionQueue.length < 3) {
-                    directionQueue.push(direction);
+                // Clear the queue if it's getting too long and add the new direction
+                if (directionQueue.length >= 2) {
+                    directionQueue = [direction];
+                } else {
+                    // Only add if it's different from the last direction in queue
+                    const lastDirection = directionQueue[directionQueue.length - 1] || game.direction;
+                    if (direction !== lastDirection) {
+                        directionQueue.push(direction);
+                    }
                 }
             }
         }
@@ -254,6 +272,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleKeyUp(event) {
+        const keyPressed = event.key.toLowerCase();
+        
+        // Clear last key when released
+        if (keyPressed === lastKeyPressed) {
+            lastKeyPressed = '';
+        }
+        
         clearArrow();
     }
 
@@ -269,6 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isPaused = false;
         gameStarted = false;
         directionQueue = [];
+        lastKeyPressed = '';
         updateUI();
         if (restartButton) restartButton.style.display = 'none';
         main();
