@@ -126,13 +126,17 @@ class GameRenderer {
     }
 
     drawPauseScreen(getText, level = 1) {
-        // Keep the level background visible, just add transparent overlay
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        // Keep the level background visible, just add light transparent overlay
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Reduced opacity from 0.5 to 0.3
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.ctx.fillStyle = 'white';
         this.ctx.font = '40px Arial';
         this.ctx.textAlign = 'center';
+        // Add text stroke for better visibility against lighter background
+        this.ctx.strokeStyle = 'black';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeText(getText('paused'), this.canvas.width / 2, this.canvas.height / 2);
         this.ctx.fillText(getText('paused'), this.canvas.width / 2, this.canvas.height / 2);
     }
 
@@ -361,6 +365,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (isPaused) {
+            // Draw the complete game board first
+            renderer.clearCanvas(game.level);
+            renderer.drawFood(game.food);
+            renderer.drawLifePowerUp(game.lifePowerUp, game.getLifePowerUpPulse());
+            renderer.drawSnake(game.snake, false, game.shouldHeadBlinkRed());
+            // Then draw the pause overlay
             renderer.drawPauseScreen(getText, game.level);
             requestAnimationFrame(gameLoop);
             return;
