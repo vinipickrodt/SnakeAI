@@ -29,6 +29,8 @@ class GameRenderer {
                 // Head of the snake
                 this.ctx.fillStyle = headColor;
                 this.ctx.strokeStyle = headBorder;
+                this.ctx.fillRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize, this.gridSize);
+                this.ctx.strokeRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize, this.gridSize);
             } else {
                 // Interpolate color for body
                 const t = (idx) / (len - 1);
@@ -36,13 +38,9 @@ class GameRenderer {
                 const g = Math.round(tailColorStart.g + t * (tailColorEnd.g - tailColorStart.g));
                 const b = Math.round(tailColorStart.b + t * (tailColorEnd.b - tailColorStart.b));
                 this.ctx.fillStyle = `rgb(${r},${g},${b})`;
-                const br = Math.round(tailBorderStart.r + t * (tailBorderEnd.r - tailBorderStart.r));
-                const bg = Math.round(tailBorderStart.g + t * (tailBorderEnd.g - tailBorderStart.g));
-                const bb = Math.round(tailBorderStart.b + t * (tailBorderEnd.b - tailBorderStart.b));
-                this.ctx.strokeStyle = `rgb(${br},${bg},${bb})`;
+                // Only fill the body segments, no stroke/border
+                this.ctx.fillRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize, this.gridSize);
             }
-            this.ctx.fillRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize, this.gridSize);
-            this.ctx.strokeRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize, this.gridSize);
         });
     }
 
