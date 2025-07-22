@@ -154,6 +154,26 @@ class GameRenderer {
         this.ctx.textAlign = 'center';
         this.ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2);
     }
+
+    drawWaitingForInputMessage(getText, level = 1) {
+        // Light overlay to indicate waiting state
+        this.ctx.fillStyle = 'rgba(255, 165, 0, 0.2)'; // Orange tint
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Message text
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '24px Arial';
+        this.ctx.textAlign = 'center';
+        
+        // Add text stroke for better visibility
+        this.ctx.strokeStyle = 'black';
+        this.ctx.lineWidth = 2;
+        
+        const message = getText('waitingForInput');
+            
+        this.ctx.strokeText(message, this.canvas.width / 2, this.canvas.height - 30);
+        this.ctx.fillText(message, this.canvas.width / 2, this.canvas.height - 30);
+    }
 }
 
 // ==========================================
@@ -193,7 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
             useArrows: 'Use ↑↓←→ ou WASD para mover',
             pressPause: 'Pressione P para pausar',
             level: 'Nível',
-            go: 'Vai!'
+            go: 'Vai!',
+            waitingForInput: 'Pressione uma tecla direcional para continuar'
         },
         'en-US': {
             gameTitle: 'Snake Game',
@@ -210,7 +231,8 @@ document.addEventListener('DOMContentLoaded', () => {
             useArrows: 'Use ↑↓←→ or WASD to move',
             pressPause: 'Press P to pause',
             level: 'Level',
-            go: 'Go!'
+            go: 'Go!',
+            waitingForInput: 'Press a directional key to continue'
         }
     };
 
@@ -286,6 +308,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
+            // Resume movement if waiting for input after collision
+            if (game.waitingForInput) {
+                game.resumeAfterInput();
+            }
+            
             if (!isPaused && !isLevelingUp && !game.gameOver) {
                 // Clear the queue if it's getting too long and add the new direction
                 if (directionQueue.length >= 2) {
@@ -319,7 +346,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function togglePause() {
         if (game.gameOver || isLevelingUp) return;
         isPaused = !isPaused;
-        if (!isPaused) main();
+        
+        // Update game's internal pause state
+        if (isPaused) {
+            game.pause();
+        } else {
+            game.resume();
+            main();
+        }
     }
 
     function restartGame() {
@@ -372,6 +406,18 @@ document.addEventListener('DOMContentLoaded', () => {
             renderer.drawSnake(game.snake, false, game.shouldHeadBlinkRed());
             // Then draw the pause overlay
             renderer.drawPauseScreen(getText, game.level);
+            requestAnimationFrame(gameLoop);
+            return;
+        }
+
+        if (game.waitingForInput) {
+            // Draw the complete game board
+            renderer.clearCanvas(game.level);
+            renderer.drawFood(game.food);
+            renderer.drawLifePowerUp(game.lifePowerUp, game.getLifePowerUpPulse());
+            renderer.drawSnake(game.snake, false, game.shouldHeadBlinkRed());
+            // Show waiting for input message
+            renderer.drawWaitingForInputMessage(getText, game.level);
             requestAnimationFrame(gameLoop);
             return;
         }

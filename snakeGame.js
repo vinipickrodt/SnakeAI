@@ -19,6 +19,8 @@ class SnakeGame {
         this.blinkStartTime = 0;
         this.lifePowerUpTimer = 0;
         this.gameSpeed = 100;
+        this.isPaused = false; // Track if movement is paused
+        this.waitingForInput = false; // Track if waiting for user input after collision
         // Initialize game
         this.createFood();
     }
@@ -69,7 +71,7 @@ class SnakeGame {
     }
 
     move() {
-        if (this.gameOver) return false;
+        if (this.gameOver || this.isPaused || this.waitingForInput) return false;
         const head = { ...this.snake[0] };
         // Calculate new head position
         switch (this.direction) {
@@ -102,6 +104,9 @@ class SnakeGame {
         if ((hitWall || hitSelf) && !this.isBlinking) {
             this.loseLife();
             if (this.gameOver) return false;
+            // Stop movement and wait for user input after collision
+            this.waitingForInput = true;
+            return false;
         }
         // Check for food consumption
         if (head.x === this.food.x && head.y === this.food.y) {
@@ -205,12 +210,33 @@ class SnakeGame {
         this.lifePowerUpTimer = 0;
         this.foodsEaten = 0;
         this.gameSpeed = 100;
+        this.isPaused = false;
+        this.waitingForInput = false;
         this.createFood();
     }
 
     update() {
         this.updateBlinking();
         this.updateLifePowerUp();
+    }
+
+    // Pause/Resume methods
+    pause() {
+        this.isPaused = true;
+    }
+
+    resume() {
+        this.isPaused = false;
+    }
+
+    // Resume movement after collision when user presses directional key
+    resumeAfterInput() {
+        this.waitingForInput = false;
+    }
+
+    // Check if snake should not move
+    isMovementBlocked() {
+        return this.gameOver || this.isPaused || this.waitingForInput;
     }
 }
 
