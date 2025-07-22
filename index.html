@@ -28,14 +28,28 @@
         </div>
         <canvas id="gameCanvas" width="400" height="400"></canvas>
         <div class="game-info">
-            <div class="info-box"><span id="score-label">Pontuação:</span> <span id="score">0</span></div>
-            <div class="info-box"><span id="lives-label">Vidas:</span> <span id="lives">3</span></div>
-            <button id="restartButton" style="display: none;">Reiniciar</button>
+            <div class="game-stats">
+                <div class="info-box"><span id="score-label">Pontuação:</span> <span id="score">0</span></div>
+                <div class="info-box"><span id="lives-label">Vidas:</span> <span id="lives">3</span></div>
+            </div>
+            <div class="game-controls">
+                <button id="restartButton" style="display: none;">Reiniciar</button>
+                <div class="replay-controls" id="replayControls" style="display: none;">
+                    <button id="watchReplayButton">Assistir Replay (2x)</button>
+                    <div class="replay-progress" id="replayProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="replay-status" id="replayStatus">Replay: 0%</div>
+                        <button id="stopReplayButton">Parar Replay</button>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="arrow-indicator" id="arrow-indicator" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; z-index: 10;"></div>
     </div>
     <script src="snakeGame.js"></script>
     <script src="script.js"></script>
-    <div class="version">v1.4.0</div>
+    <div class="version">v1.5.0</div>
 </body>
 </html>
