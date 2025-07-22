@@ -179,6 +179,13 @@ class SnakeGame {
         return Math.floor(elapsed / blinkInterval) % 2 === 0;
     }
 
+    shouldHeadBlinkRed() {
+        if (!this.isBlinking) return false;
+        const elapsed = Date.now() - this.blinkStartTime;
+        const blinkInterval = 200; // 200ms intervals
+        return Math.floor(elapsed / blinkInterval) % 2 === 0;
+    }
+
     getLifePowerUpPulse() {
         if (!this.lifePowerUp) return 0;
         const elapsed = Date.now() - this.lifePowerUpTimer;

@@ -15,11 +15,9 @@ class GameRenderer {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    drawSnake(snake, shouldBlink = false) {
-        if (shouldBlink) return; // Skip drawing when blinking
-        
-        const headColor = '#FFD700'; // Gold
-        const headBorder = '#B8860B';
+    drawSnake(snake, shouldBlink = false, shouldHeadBlinkRed = false) {
+        const headColor = shouldHeadBlinkRed ? '#FF0000' : '#FFD700'; // Red when blinking, gold otherwise
+        const headBorder = shouldHeadBlinkRed ? '#8B0000' : '#B8860B';
         const tailColorStart = { r: 76, g: 175, b: 80 }; // #4CAF50
         const tailColorEnd = { r: 200, g: 255, b: 200 }; // Light green
         const tailBorderStart = { r: 46, g: 139, b: 87 }; // #2E8B57
@@ -292,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderer.clearCanvas();
             renderer.drawFood(game.food);
             renderer.drawLifePowerUp(game.lifePowerUp, game.getLifePowerUpPulse());
-            renderer.drawSnake(game.snake);
+            renderer.drawSnake(game.snake, false, false);
             renderer.drawGameOver(game.score, getText);
             if (restartButton) restartButton.style.display = 'block';
             return;
@@ -302,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderer.clearCanvas();
             renderer.drawFood(game.food);
             renderer.drawLifePowerUp(game.lifePowerUp, game.getLifePowerUpPulse());
-            renderer.drawSnake(game.snake);
+            renderer.drawSnake(game.snake, false, false);
             renderer.drawStartScreen(getText);
             requestAnimationFrame(gameLoop);
             return;
@@ -342,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderer.clearCanvas();
             renderer.drawFood(game.food);
             renderer.drawLifePowerUp(game.lifePowerUp, game.getLifePowerUpPulse());
-            renderer.drawSnake(game.snake, game.shouldSnakeBlink());
+            renderer.drawSnake(game.snake, false, game.shouldHeadBlinkRed());
             frameAccumulator = 0;
         }
         requestAnimationFrame(gameLoop);
