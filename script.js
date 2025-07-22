@@ -45,14 +45,9 @@ class GameRenderer {
         const tailBorderEnd = { r: 180, g: 220, b: 180 }; // Light border
         const len = snake.length;
 
+        // First, draw all body segments (excluding head)
         snake.forEach((segment, idx) => {
-            if (idx === 0) {
-                // Head of the snake
-                this.ctx.fillStyle = headColor;
-                this.ctx.strokeStyle = headBorder;
-                this.ctx.fillRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize, this.gridSize);
-                this.ctx.strokeRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize, this.gridSize);
-            } else {
+            if (idx > 0) { // Skip head (idx === 0)
                 // Interpolate color for body
                 const t = (idx) / (len - 1);
                 const r = Math.round(tailColorStart.r + t * (tailColorEnd.r - tailColorStart.r));
@@ -63,8 +58,17 @@ class GameRenderer {
                 this.ctx.fillRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize, this.gridSize);
             }
         });
-    }
 
+        // Then, draw the head on top of everything
+        if (snake.length > 0) {
+            const head = snake[0];
+            this.ctx.fillStyle = headColor;
+            this.ctx.strokeStyle = headBorder;
+            this.ctx.fillRect(head.x * this.gridSize, head.y * this.gridSize, this.gridSize, this.gridSize);
+            this.ctx.strokeRect(head.x * this.gridSize, head.y * this.gridSize, this.gridSize, this.gridSize);
+        }
+    }
+    
     drawFood(food) {
         this.ctx.fillStyle = '#FF4136';
         this.ctx.strokeStyle = '#8B0000';
