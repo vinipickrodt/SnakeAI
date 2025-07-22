@@ -10,9 +10,30 @@ class GameRenderer {
         this.tileCount = this.canvas.width / this.gridSize;
     }
 
-    clearCanvas() {
-        this.ctx.fillStyle = '#a8d5e5';
+    clearCanvas(level = 1) {
+        this.ctx.fillStyle = this.getBackgroundColor(level);
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    getBackgroundColor(level) {
+        // Define different background colors for each level
+        const levelColors = [
+            '#a8d5e5', // Level 1
+            '#5a9fd4', // Level 2
+            '#4a8fc4', // Level 3
+            '#3a7fb4', // Level 4
+            '#2a6fa4', // Level 5
+            '#1a5f94'  // Level 6
+        ];
+        
+        // For levels beyond predefined colors, use the last color
+        if (level <= levelColors.length) {
+            return levelColors[level - 1];
+        } else {
+            // For very high levels, create a gradient towards darker colors
+            const baseIndex = levelColors.length - 1;
+            return levelColors[baseIndex];
+        }
     }
 
     drawSnake(snake, shouldBlink = false, shouldHeadBlinkRed = false) {
@@ -71,7 +92,8 @@ class GameRenderer {
         this.ctx.strokeRect(x, y + size * 0.4, size, crossWidth);
     }
 
-    drawGameOver(score, getText) {
+    drawGameOver(score, getText, level = 1) {
+        // Keep the level background visible with transparent overlay
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -83,7 +105,8 @@ class GameRenderer {
         this.ctx.fillText(`${getText('finalScore')} ${score}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
     }
 
-    drawStartScreen(getText) {
+    drawStartScreen(getText, level = 1) {
+        // Keep the level background visible with transparent overlay
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
@@ -102,7 +125,8 @@ class GameRenderer {
         this.ctx.fillText(getText('pressPause'), this.canvas.width / 2, this.canvas.height / 2 + 80);
     }
 
-    drawPauseScreen(getText) {
+    drawPauseScreen(getText, level = 1) {
+        // Keep the level background visible, just add transparent overlay
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -112,9 +136,15 @@ class GameRenderer {
         this.ctx.fillText(getText('paused'), this.canvas.width / 2, this.canvas.height / 2);
     }
 
-    drawLevelUpScreen(text) {
+    drawLevelUpScreen(text, level = 1) {
+        // Clear canvas with the new level background color
+        this.clearCanvas(level);
+        
+        // Draw semi-transparent overlay
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw text
         this.ctx.fillStyle = 'white';
         this.ctx.font = '50px Arial';
         this.ctx.textAlign = 'center';
@@ -311,27 +341,27 @@ document.addEventListener('DOMContentLoaded', () => {
         frameAccumulator += delta;
 
         if (game.gameOver) {
-            renderer.clearCanvas();
+            renderer.clearCanvas(game.level);
             renderer.drawFood(game.food);
             renderer.drawLifePowerUp(game.lifePowerUp, game.getLifePowerUpPulse());
             renderer.drawSnake(game.snake, false, false);
-            renderer.drawGameOver(game.score, getText);
+            renderer.drawGameOver(game.score, getText, game.level);
             if (restartButton) restartButton.style.display = 'block';
             return;
         }
 
         if (!gameStarted) {
-            renderer.clearCanvas();
+            renderer.clearCanvas(game.level);
             renderer.drawFood(game.food);
             renderer.drawLifePowerUp(game.lifePowerUp, game.getLifePowerUpPulse());
             renderer.drawSnake(game.snake, false, false);
-            renderer.drawStartScreen(getText);
+            renderer.drawStartScreen(getText, game.level);
             requestAnimationFrame(gameLoop);
             return;
         }
 
         if (isPaused) {
-            renderer.drawPauseScreen(getText);
+            renderer.drawPauseScreen(getText, game.level);
             requestAnimationFrame(gameLoop);
             return;
         }
@@ -361,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             updateUI();
-            renderer.clearCanvas();
+            renderer.clearCanvas(game.level);
             renderer.drawFood(game.food);
             renderer.drawLifePowerUp(game.lifePowerUp, game.getLifePowerUpPulse());
             renderer.drawSnake(game.snake, false, game.shouldHeadBlinkRed());
@@ -387,10 +417,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const elapsed = ts - levelUpStart;
             
             if (elapsed < 1000) {
-                renderer.drawLevelUpScreen(`${getText('level')} ${game.level}`);
+                renderer.drawLevelUpScreen(`${getText('level')} ${game.level}`, game.level);
             } else if (elapsed < 4000) {
                 const sec = 3 - Math.floor((elapsed - 1000) / 1000);
-                renderer.drawLevelUpScreen(sec > 0 ? sec : getText('go'));
+                renderer.drawLevelUpScreen(sec > 0 ? sec : getText('go'), game.level);
             } else {
                 isLevelingUp = false;
                 main();
