@@ -4,7 +4,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const PORT = 80;
-const HOST = 'localhost';
+const HOST = process.env.HOST || '0.0.0.0';
 
 // MIME types
 const mimeTypes = {
