@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const PORT = 8080;
+const PORT = 80;
 const HOST = 'localhost';
 
 // MIME types
